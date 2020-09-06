@@ -7,52 +7,62 @@
 <html>
 
 <head>
+	<title>QuickSight Covid Report</title>
 	<!-- <title>Generic - Retrospect by TEMPLATED</title> -->
+	<meta http-equiv="refresh" content="900">
+
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
 	<link rel="stylesheet" href="assets/css/main.css" />
 	<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
 	<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+	<script type="text/javascript"
+		src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.2/dist/quicksight-embedding-js-sdk.min.js"></script>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script>
+		$(document).ready(function () {
+			apiGatewayUrl = "https://rnbg1rjw32.execute-api.us-east-2.amazonaws.com/prod/getembedurl"
+			const headers = { 'Content-Type': 'application/json' }
 
-	<title>Basic Embed</title>
-        <script src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.9/dist/quicksight-embedding-js-sdk.min.js"></script> 
-        <script type="text/javascript">
-            var dashboard
-            function onDashboardLoad(payload) {
-                console.log("Do something when the dashboard is fully loaded.");
-            }
- 
-            function onError(payload) {
-                console.log("Do something when the dashboard fails loading");
-            }
- 
-            function embedDashboard() {
-                var containerDiv = document.getElementById("embeddingContainer");
-                var options = {
-                    url: "https://us-east-1.quicksight.aws.amazon.com/embed/583b4de8bfff43ed8f7877918e69c428/dashboards/e23f5b33-5849-4ca9-817d-f42a4be27721?isauthcode=true&identityprovider=quicksight&code=AYABeCGJUb7l2YYS-IDvubM2kagAAAABAAdhd3Mta21zAEthcm46YXdzOmttczp1cy1lYXN0LTE6MjU5NDgwNDYyMTMyOmtleS81NGYwMjdiYy03MDJhLTQxY2YtYmViNS0xNDViOTExNzFkYzMAuAECAQB4P-lAb3AsrVHPwO-wVCEmuFDTp0yz4wFfkrwutzPupewBOUO4Xhwu59YYmZEGOUXttwAAAH4wfAYJKoZIhvcNAQcGoG8wbQIBADBoBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDP3W0v_kmAIKdM9P_wIBEIA7IWZlZ3KAV2hmhrVC3UOAlAnq4TXtvxg0PRWQbac0eNPhLrfB6KsC1FT5BibVbHLic6s6HWf2kfVDdHECAAAAAAwAABAAAAAAAAAAAAAAAAAAPZo8HUDVa6xh7pEi0fHN7P____8AAAABAAAAAAAAAAAAAAABAAAAm9E6736EF6H2tluPYIqACaT3bqRJAacRbJAZpJlkteNDzMpD8uSJxLN-itvCGKnLE9BsrJQKt2CvXaXPyZ9I3dcmnZXBHnkrjtkdircdmtR_T9K4bPnWFcTbAMsIHde90FoP4W8B8r5WGEibYVDzU0F517O6_JU3pTXNBlHpkJfc-jQWksExXza5zbs81-b77BIQS7r-TjJftCXEs-Aer5MqTI6SWWtaE6xb0g%3D%3D",
-                    container: containerDiv,
-                    parameters: {
-                        country: "United States"
-                    },
-                    scrolling: "no",
-                    height: "700px",
-                    width: "1000px",
-                    locale: "en-US",
-                    footerPaddingEnabled: true
-                };
-                dashboard = QuickSightEmbedding.embedDashboard(options);
-                dashboard.on("error", onError);
-                dashboard.on("load", onDashboardLoad);
-            }
- 
-            function onCountryChange(obj) {
-                dashboard.setParameters({country: obj.value});
-            }
-        </script>
+			axios.get(apiGatewayUrl, { headers: headers })
+				.then((response) => {
+					console.log('Got Response!!');
+					console.log('Dashboard URL => ' + response.data.EmbedUrl);
+					embedDashboard(response.data.EmbedUrl);;
+				})
+				.catch(function (error) {
+					console.log('Error obtaining QuickSight dashboard embed url.');
+				});
+
+			function onVisualLoaded() {
+				var div = document.getElementById("loadedContainer");
+				div.innerHTML = "Dashboard fully loaded";
+			}
+
+			function onError() {
+				var div = document.getElementById("errorContainer");
+				div.innerHTML = "your seesion has expired";
+			}
+			function embedDashboard(embedUrl) {
+				var containerDiv = document.getElementById("dashboardContainer");
+				var params = {
+					url: embedUrl,
+					container: containerDiv,
+					scrolling: "no",
+                	height: "1000px",
+				};
+				var dashboard = QuickSightEmbedding.embedDashboard(params);
+				dashboard.on('error', onError);
+				dashboard.on('load', onVisualLoaded);
+			}
+		});
+	</script>
 </head>
 
-<body onload="embedDashboard()">
+<body>
 
 	<!-- Header -->
 	<header id="header">
@@ -72,17 +82,13 @@
 
 	<!-- Main -->
 	<section id="main" class="wrapper">
-		<h2>QuickSight dashboard</h2>
-		<div id="embeddingContainer"></div>
-
 		<div class="container">
-
 			<header class="major special">
 				<h2>Covid Live Report</h2>
 				<p>Report by Amazon QuickSight</p>
 			</header>
 
-			<a href="#" class="image fit"><img src="images/report.png" alt="" /></a>
+			<div id="dashboardContainer"></div>
 			<h3>Introduction</h3>
 			<p>We have used following AWS Services to create this dashboard.</p>
 
@@ -131,8 +137,7 @@
 			</ul>
 			<ul class="copyright">
 				<li>&copy; CapstoneTeam17</li>
-				<!-- <li>Images: <a href="http://unsplash.com">Unsplash</a>.</li> -->
-				<!-- <li>Design: <a href="http://templated.co">TEMPLATED</a>.</li> -->
+
 			</ul>
 		</div>
 	</footer>
@@ -141,7 +146,6 @@
 	<script src="assets/js/jquery.min.js"></script>
 	<script src="assets/js/skel.min.js"></script>
 	<script src="assets/js/util.js"></script>
-	<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
 	<script src="assets/js/main.js"></script>
 
 </body>
